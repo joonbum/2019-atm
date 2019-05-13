@@ -5,6 +5,7 @@
 
 # library
 library(tidyverse)
+library(readtext)
 
 # functions
 # source("~/Box/JB Work/R/Function/multiplot.R")
@@ -28,6 +29,7 @@ data.lane<-read.csv("/Users/leej1/Box/_ATM/atmExp1/part108/lane.csv") # lane pos
 
 data.gantry.info<-read.csv("/Users/leej1/Box/_NCHRP 03-124 - Guidance for ATM/Technical/Task 7/Data analysis/Data/atm_gantry_information.csv")
 
+data.aoi<-read.table("/Users/leej1/Box/_NCHRP 03-124 - Guidance for ATM/Technical/Task 7/Data analysis/Data/108_2. Recording 4112019 121225 PM_CsvData.txt",sep="\t",header=TRUE)
 
 # data.atm1<-read.csv("/Users/leej1/Box/_ATM/atmExp1/part108/atm_sign1.csv")
 # data.atm2<-read.csv("/Users/leej1/Box/_ATM/atmExp1/part108/atm_sign2.csv")
@@ -41,6 +43,12 @@ data.gantry.info<-read.csv("/Users/leej1/Box/_NCHRP 03-124 - Guidance for ATM/Te
 
 
 # 2. clean----
+
+names(data.aoi)[1]<-"time"
+names(data.aoi)[2]<-"UTC"
+names(data.aoi)[3]<-"frame"
+names(data.aoi)[4]<-"fixation_road"
+names(data.aoi)[5]<-"fixation_phone"
 
 # combine all
 data.new<-cbind(data.frame,data.condition,data.gantry,data.speed,data.lane)
@@ -133,25 +141,71 @@ ggplot(data.new,aes(x=frame,y=lane))+geom_point()
 unique(data.new$gantry)
 
 
-ggplot(data.new,aes(x=frame,y=factor(0)))+geom_point(aes(color=lane0),size=5,alpha=I(.5))+
-  geom_point(data=data.new,aes(x=frame,y=factor(1),color=lane1),size=5,alpha=I(.5))+
-  geom_point(data=data.new,aes(x=frame,y=factor(2),color=lane2),size=5,alpha=I(.5))+
-  geom_point(data=data.new,aes(x=frame,y=factor(3),color=lane3),size=5,alpha=I(.5))+
+gantry.position<-data.new%>%group_by(gantry)%>%summarise(start.point=min(frame))
+
+ggplot(data.new,aes(x=frame,y=factor(0)))+geom_point(aes(color=lane0),size=5,alpha=I(.5), shape=0)+
+  geom_point(data=data.new,aes(x=frame,y=factor(1),color=lane1),size=5,alpha=I(.5), shape=0)+
+  geom_point(data=data.new,aes(x=frame,y=factor(2),color=lane2),size=5,alpha=I(.5), shape=0)+
+  geom_point(data=data.new,aes(x=frame,y=factor(3),color=lane3),size=5,alpha=I(.5), shape=0)+
   geom_line(data=data.new,aes(x=frame,y=factor(lane),group=subjectid),alpha=I(.5),size=2)+
   scale_colour_manual(values = c("red", "orange", "forestgreen"))+
-  ylab("Lane position")+xlab("Frame")+theme(legend.position = "none")
+  geom_vline(data=gantry.position, aes(xintercept=start.point), color="grey", size=3)+
+  facet_wrap(~condition_name,scales="free")+ylab("Lane number \n(0=right most lane, 3=left mist lane)")+xlab("Frame")+theme(legend.position = "none")
 
-
-ggplot(data.new,aes(x=frame,y=factor(0)))+geom_point(aes(color=lane0),size=5,alpha=I(.5))+
-  geom_point(data=data.new,aes(x=frame,y=factor(1),color=lane1),size=5,alpha=I(.5))+
-  geom_point(data=data.new,aes(x=frame,y=factor(2),color=lane2),size=5,alpha=I(.5))+
-  geom_point(data=data.new,aes(x=frame,y=factor(3),color=lane3),size=5,alpha=I(.5))+
+ggplot(data.new,aes(x=frame,y=factor(0)))+geom_line(aes(color=lane0,group=subjectid),alpha=I(.5),size=10)+
+  geom_line(data=data.new,aes(x=frame,y=factor(1),color=lane1,group=subjectid),alpha=I(.5),size=10)+
+  geom_line(data=data.new,aes(x=frame,y=factor(2),color=lane2,group=subjectid),alpha=I(.5),size=10)+
+  geom_line(data=data.new,aes(x=frame,y=factor(3),color=lane3,group=subjectid),alpha=I(.5),size=10)+
   geom_line(data=data.new,aes(x=frame,y=factor(lane),group=subjectid),alpha=I(.5),size=2)+
   scale_colour_manual(values = c("red", "orange", "forestgreen"))+
-  facet_wrap(~condition_name,scales="free")+ylab("Lane position")+xlab("Frame")+theme(legend.position = "none")
+  # geom_vline(data=gantry.position, aes(xintercept=start.point), color="black", size=1,alpha=I(.3), linetype=2)+
+  ylab("Lane number \n(0=right most lane, 3=left mist lane)")+xlab("Frame")+theme(legend.position = "none")+
+  facet_wrap(~condition_name,scales="free")
+
+ggplot(data.new,aes(x=frame,y=factor(0)))+geom_point(aes(color=lane0),alpha=I(.5), shape=0)+
+  geom_point(data=data.new,aes(x=frame,y=factor(1),color=lane1),alpha=I(.5), shape=0)+
+  geom_point(data=data.new,aes(x=frame,y=factor(2),color=lane2),alpha=I(.5), shape=0)+
+  geom_point(data=data.new,aes(x=frame,y=factor(3),color=lane3),alpha=I(.5), shape=0)+
+  geom_line(data=data.new,aes(x=frame,y=factor(lane),group=subjectid),alpha=I(.5),size=2)+
+  scale_colour_manual(values = c("red", "orange", "forestgreen"))+
+  # geom_vline(data=gantry.position, aes(xintercept=start.point), color="black", size=1,alpha=I(.3), linetype=2)+
+  ylab("Lane number \n(0=right most lane, 3=left mist lane)")+xlab("Frame")+theme(legend.position = "none")+
+  facet_wrap(~condition_name,scales="free")
+
+ggplot(data.new,aes(x=frame,y=factor(0)))+geom_point(aes(color=lane0),alpha=I(.5), shape=0)+
+  geom_point(data=data.new,aes(x=frame,y=factor(1),color=lane1),alpha=I(.5), shape=0)+
+  geom_point(data=data.new,aes(x=frame,y=factor(2),color=lane2),alpha=I(.5), shape=0)+
+  geom_point(data=data.new,aes(x=frame,y=factor(3),color=lane3),alpha=I(.5), shape=0)+
+  geom_line(data=data.new,aes(x=frame,y=factor(lane),group=subjectid),alpha=I(.5),size=2)+
+  scale_colour_manual(values = c("red", "orange", "forestgreen"))+
+  geom_vline(data=gantry.position, aes(xintercept=start.point), color="black", size=1,alpha=I(.3), linetype=2)+
+  ylab("Lane number \n(0=right most lane, 3=left mist lane)")+xlab("Frame")+theme(legend.position = "none")
+
+ggplot(data.new,aes(x=frame,y=factor(0)))+geom_point(aes(color=lane0),alpha=I(.5), shape=0)+
+  geom_point(data=data.new,aes(x=frame,y=factor(1),color=lane1),alpha=I(.5), shape=0)+
+  geom_point(data=data.new,aes(x=frame,y=factor(2),color=lane2),alpha=I(.5), shape=0)+
+  geom_point(data=data.new,aes(x=frame,y=factor(3),color=lane3),alpha=I(.5), shape=0)+
+  geom_line(data=data.new,aes(x=frame,y=factor(lane),group=subjectid),alpha=I(.5),size=2)+
+  scale_colour_manual(values = c("red", "orange", "forestgreen"))+
+  # geom_vline(data=gantry.position, aes(xintercept=start.point), color="black", size=1,alpha=I(.3), linetype=2)+
+  ylab("Lane number \n(0=right most lane, 3=left mist lane)")+xlab("Frame")+theme(legend.position = "none")+
+  facet_wrap(~condition_name,scales="free_x",ncol=4)+theme(panel.spacing = unit(-1.25, "lines")) 
+
+ggplot(data.new,aes(x=frame,y=factor(0)))+geom_point(aes(color=lane0),alpha=I(.5), shape=0)+
+  geom_point(data=data.new,aes(x=frame,y=factor(1),color=lane1),alpha=I(.5), shape=0)+
+  geom_point(data=data.new,aes(x=frame,y=factor(2),color=lane2),alpha=I(.5), shape=0)+
+  geom_point(data=data.new,aes(x=frame,y=factor(3),color=lane3),alpha=I(.5), shape=0)+
+  geom_line(data=data.new,aes(x=frame,y=factor(lane),group=subjectid),alpha=I(.5),size=2)+
+  scale_colour_manual(values = c("red", "orange", "forestgreen"))+
+  # geom_vline(data=gantry.position, aes(xintercept=start.point), color="black", size=1,alpha=I(.3), linetype=2)+
+  ylab("Lane number \n(0=right most lane, 3=left mist lane)")+xlab("Frame")+theme(legend.position = "none")+
+  facet_wrap(~block,scales="free_x",ncol=4)+theme(panel.spacing = unit(-1.25, "lines")) 
 
 
+head(data.new)
+tail(data.new)
 
+ggplot(data.aoi, aes(x=frame,y=factor(fixation_phone)))+geom_point()
 
 # end of code
 #
